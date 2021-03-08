@@ -10,5 +10,6 @@ const myServiceUrl = 'http://www.yxy.pink:18080/';
 const myServicePath = {
   'index':myServiceUrl+'index',//所有电影内容
   'floor':myServiceUrl+'floor',//首页
+  'selectMovie':myServiceUrl+'selectMovie',//搜索电影
 };
 

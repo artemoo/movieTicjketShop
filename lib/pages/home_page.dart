@@ -1,5 +1,6 @@
 //首页
 
+import 'dart:async';
 import 'dart:developer';
 // import 'dart:html';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_easyrefresh/easy_refresh.dart';
 import '../routers/application.dart';
 import '../pages/publicWidget/movie_bar.dart';
+import '../service/service_method.dart';
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -76,7 +78,7 @@ class _HomePageState extends State<HomePage>
             // 判断是否存在值
             if (snapshot.hasData) {
               var data = json.decode(snapshot.data.toString());
-              print("============>>>>>>>>.请求成功");
+              // print("============>>>>>>>>.请求成功");
               // 将map解析为list
               List<Map> swiper = (data['data']['ImgData'] as List).cast();
               List<Map> hotMovieList1 = (data['data']['floor1'] as List).cast();
@@ -236,13 +238,24 @@ class TextScreen extends StatelessWidget {
   }
 }
 
+var nameList = [
+  "绿皮南瓜","番茄", "白菜", "胡萝卜","土豆","甜菜","白甜"
+];
+var data;
+void getSearchList(query) async{
+
+  print(query);
+  await myGetRequest('http://49.234.103.109:18080/selectMovie'+'?para='+query).then((value){
+     data = json.decode(value.toString());
+  });
+  return data;
+}
 
 
 //TODO 搜索栏
-class SearchBarDelegate extends SearchDelegate<String> {
-  var nameList = [
-    "绿皮南瓜","番茄", "白菜", "胡萝卜","土豆","甜菜","白甜"
-  ];
+class SearchBarDelegate extends SearchDelegate<String>{
+
+
   bool flag;//判断搜索框内输入的内容是否存在于数据列表里
   //返回值为我们搜索框右侧的一个控件
   @override
@@ -272,34 +285,72 @@ class SearchBarDelegate extends SearchDelegate<String> {
   //返回值为我们搜到内容后的展现
   @override
   Widget buildResults(BuildContext context) {
-    for(int i=0;i<nameList.length;i++){
-      if(query==nameList[i]){
-        flag = true;
-        break;
-      }
-      else{
-        flag = false;
-      }
+
+    getSearchList(query);
+    Timer(Duration(seconds: 2), (){
+      // Do something
+      print('====查询到结果');
+      List<Map> resultList = (data['data'] as List).cast();
+      print(data);
+    });
+
+
+    if (data['data'].length!=0) {
+      flag = true;
+    }else{
+      flag =false;
+    }
+    // for(int i=0;i<data.length;i++){
+    //
+    //   if(query==data[i]){
+    //     flag = true;
+    //     break;
+    //   }
+    //   else{
+    //     flag = false;
+    //   }
+    // }
+    Widget searchItem (data){
+      return ListView.builder(
+        itemCount: data['data'].length,
+        itemBuilder: (context,index){
+          return InkWell(
+            child: Container(
+              margin: EdgeInsets.only(top: 20),
+              child: Row(
+                children: [
+                  Image.network(data['data'][index]['image'],height: ScreenUtil().setHeight(130),width: ScreenUtil().setWidth(100),),
+                  Column(
+                    children: [
+                      Text(data['data'][index]['title']),
+                      Text(data['data'][index]['actor'])
+                    ],
+                  )
+                ],
+              ),
+            ),
+            onTap: (){
+              Navigator.push(
+                context,
+                new MaterialPageRoute(
+                  builder: (context) =>  TextScreen(s: query),
+                  //TextScreen()用于展示我们想要通过搜索到达的页面，
+                  //这里用到了构造函数传值。
+                ),
+              );
+            },
+          );
+        },
+      );
     }
 
     return flag == true ? Padding(
         padding: EdgeInsets.all(16),
-        child: InkWell(
-          child: Text(query),
-          onTap: (){
-            Navigator.push(
-              context,
-              new MaterialPageRoute(
-                builder: (context) =>  TextScreen(s: query),
-                //TextScreen()用于展示我们想要通过搜索到达的页面，
-                //这里用到了构造函数传值。
-              ),
-            );
-          },
-        ))
+        child: searchItem(data)
+    )
         :
     Center(
-      child: Text("没有找到这个蔬菜！！！"),
+      child: Text("没有找到这个结果！！！"),
     );
   }
 

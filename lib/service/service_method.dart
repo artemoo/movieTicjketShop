@@ -56,6 +56,8 @@ Future myRequest(url, {formData}) async {
     dio.options.contentType =
         ContentType.parse("application/x-www-form-urlencoded;charset=UTF-8").toString();
     if (formData != null) {
+      print(formData);
+      print('+++++_____');
       response = await dio.post(myServicePath[url], data: formData);
       print(response);
     } else {
@@ -63,6 +65,29 @@ Future myRequest(url, {formData}) async {
       print(response.runtimeType.toString());
     }
     if (response.statusCode == 200) {
+      print(response.data);
+      return response.data;
+    } else {
+      throw Exception('后端接口异常'); //主动抛出异常
+    }
+
+  } catch (error) {
+    return print('Error:=======>${error}');
+  }
+}
+
+Future myGetRequest(url) async {
+  try {
+    print('开始获取MY数据');
+    Response response;
+    Dio dio = new Dio();
+    dio.options.responseType =  ResponseType.plain;
+    //dio.options.contentType = ContentType.parse("application/x-www-form-urlencoded;charset=UTF-8").toString();
+
+      response = await dio.get(url);
+      print(response.runtimeType.toString());
+    if (response.statusCode == 200) {
+      print(response.data);
       return response.data;
     } else {
       throw Exception('后端接口异常'); //主动抛出异常
